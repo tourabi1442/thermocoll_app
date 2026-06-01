@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ThermoСool{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+        <span class="brand-icon">❄️</span>
+        <span>ThermoСool</span>
+    </a>
+
+    <div class="nav-links">
+        <a href="/dashboard" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a href="/simulator" class="nav-link {% if request.endpoint == 'simulator' %}active{% endif %}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Simulateur
+        </a>
+        <a href="/learn" class="nav-link {% if request.endpoint == 'learn' %}active{% endif %}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Cycle
+        </a>
+        <a href="/climatisation" class="nav-link {% if request.endpoint == 'climatisation' %}active{% endif %}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Climatisation
+        </a>
+        <a href="/results" class="nav-link {% if request.endpoint == 'results' %}active{% endif %}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Analyse
+        </a>
+        {% if session.get('is_admin') %}
+        <a href="/admin" class="nav-link {% if request.endpoint == 'admin' %}active{% endif %}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Admin
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="nav-user">
+        <div class="user-avatar">{{ session.get('username', 'U')[0].upper() }}</div>
+        <span class="nav-username">{{ session.get('username', '') }}</span>
+        <a href="/logout" class="btn-logout">Déconnexion</a>
+    </div>
+</nav>
+
+<div>{% block content %}{% endblock %}</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

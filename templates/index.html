@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="simulator-container">
+    <div class="controls-section">
+        <h2>⚙️ Paramètres de Simulation</h2>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Réfrigérant:</label>
+                <select id="refrigerant">
+                    <option value="R32">R32 - Standard HVAC</option>
+                    <option value="R410A">R410A - Standard HVAC</option>
+                    <option value="R290">R290 - Propane naturel</option>
+                    <option value="R744">R744 - CO₂ naturel</option>
+                    <option value="R134a">R134a - Classique</option>
+                    <option value="NH3">NH₃ - Ammoniac naturel</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Temp. Évaporateur (°C):</label>
+                <div class="slider-group">
+                    <input type="range" id="tempEvap" min="-20" max="20" value="5">
+                    <span id="tempEvapValue">5</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Temp. Condenseur (°C):</label>
+                <div class="slider-group">
+                    <input type="range" id="tempCond" min="20" max="65" value="45">
+                    <span id="tempCondValue">45</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Puissance Frigorifique (W):</label>
+                <div class="slider-group">
+                    <input type="range" id="power" min="1000" max="10000" value="7800" step="100">
+                    <span id="powerValue">7800</span>
+                </div>
+            </div>
+
+            <button id="runBtn" class="btn-primary">▶ Lancer la simulation</button>
+        </div>
+    </div>
+
+    <div class="diagram-section">
+        <h2>🔄 Cycle Thermodynamique</h2>
+        <div class="cycle-diagram">
+            <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Background -->
+                <rect width="500" height="400" fill="#f8f9ff" rx="10"/>
+                
+                <!-- Compressor - Red -->
+                <g class="cycle-point point-1">
+                    <rect x="30" y="160" width="100" height="80" fill="#ff6b6b" stroke="#333" stroke-width="2" rx="8"/>
+                    <text x="80" y="200" text-anchor="middle" font-size="14" font-weight="bold" fill="white">① Compression</text>
+                    <circle cx="80" cy="240" r="5" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+                </g>
+
+                <!-- Condenser - Teal -->
+                <g class="cycle-point point-2">
+                    <rect x="185" y="30" width="100" height="80" fill="#4ecdc4" stroke="#333" stroke-width="2" rx="8"/>
+                    <text x="235" y="75" text-anchor="middle" font-size="14" font-weight="bold" fill="white">② Condensation</text>
+                    <circle cx="235" cy="115" r="5" fill="#4ecdc4" stroke="#333" stroke-width="2"/>
+                </g>
+
+                <!-- Expansion - Yellow -->
+                <g class="cycle-point point-3">
+                    <rect x="340" y="160" width="100" height="80" fill="#f9ca24" stroke="#333" stroke-width="2" rx="8"/>
+                    <text x="390" y="200" text-anchor="middle" font-size="14" font-weight="bold" fill="white">③ Détente</text>
+                    <circle cx="390" cy="240" r="5" fill="#f9ca24" stroke="#333" stroke-width="2"/>
+                </g>
+
+                <!-- Evaporator - Purple -->
+                <g class="cycle-point point-4">
+                    <rect x="185" y="290" width="100" height="80" fill="#6c5ce7" stroke="#333" stroke-width="2" rx="8"/>
+                    <text x="235" y="335" text-anchor="middle" font-size="14" font-weight="bold" fill="white">④ Évaporation</text>
+                    <circle cx="235" cy="375" r="5" fill="#6c5ce7" stroke="#333" stroke-width="2"/>
+                </g>
+
+                <!-- Arrows with animation -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                        <polygon points="0 0, 10 5, 0 10" fill="#333" />
+                    </marker>
+                </defs>
+                
+                <!-- Arrow 1→2 -->
+                <path class="cycle-arrow arrow-1" d="M 130 180 Q 160 120 185 75" stroke="#333" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+                
+                <!-- Arrow 2→3 -->
+                <path class="cycle-arrow arrow-2" d="M 285 75 Q 310 120 340 180" stroke="#333" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+                
+                <!-- Arrow 3→4 -->
+                <path class="cycle-arrow arrow-3" d="M 390 240 Q 340 280 285 335" stroke="#333" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+                
+                <!-- Arrow 4→1 -->
+                <path class="cycle-arrow arrow-4" d="M 185 335 Q 160 280 130 240" stroke="#333" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+
+                <!-- Heat flow indicators -->
+                <g class="heat-indicator">
+                    <text x="450" y="150" font-size="12" fill="#ff6b6b" font-weight="bold">Q_cond</text>
+                </g>
+                <g class="heat-indicator">
+                    <text x="50" y="350" font-size="12" fill="#6c5ce7" font-weight="bold">Q_evap</text>
+                </g>
+                <g class="work-indicator">
+                    <text x="80" y="130" font-size="12" fill="#ff0000" font-weight="bold">W</text>
+                </g>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<div class="ph-diagram-section">
+    <h2>📈 Diagramme P-h (Pression-Enthalpie)</h2>
+    <canvas id="phChart" width="400" height="300"></canvas>
+</div>
+
+<div id="results" class="results hidden">
+    <h2>📊 Résultats de Simulation</h2>
+    <div class="results-grid">
+        <div class="result-item result-cop">
+            <div class="result-label">Coefficient de Performance</div>
+            <div class="result-value" id="copValue">-</div>
+            <div class="result-unit">COP</div>
+        </div>
+        <div class="result-item result-power">
+            <div class="result-label">Puissance Compresseur</div>
+            <div class="result-value" id="wCompValue">-</div>
+            <div class="result-unit">W</div>
+        </div>
+        <div class="result-item result-evap">
+            <div class="result-label">Puissance Évaporateur</div>
+            <div class="result-value" id="qEvapValue">-</div>
+            <div class="result-unit">W</div>
+        </div>
+        <div class="result-item result-efficiency">
+            <div class="result-label">Efficacité</div>
+            <div class="result-value" id="efficiencyValue">-</div>
+            <div class="result-unit">%</div>
+        </div>
+    </div>
+
+    <div class="points-section">
+        <h3>Points du Cycle Thermodynamique</h3>
+        <div class="points-grid">
+            <div class="point-card point-1-card">
+                <h4>Point 1 (Évaporation)</h4>
+                <p>T: <span id="p1T">-</span>°C</p>
+                <p>P: <span id="p1P">-</span> bar</p>
+            </div>
+            <div class="point-card point-2-card">
+                <h4>Point 2 (Condensation)</h4>
+                <p>T: <span id="p2T">-</span>°C</p>
+                <p>P: <span id="p2P">-</span> bar</p>
+            </div>
+            <div class="point-card point-3-card">
+                <h4>Point 3 (Détente)</h4>
+                <p>T: <span id="p3T">-</span>°C</p>
+                <p>P: <span id="p3P">-</span> bar</p>
+            </div>
+            <div class="point-card point-4-card">
+                <h4>Point 4 (Compression)</h4>
+                <p>T: <span id="p4T">-</span>°C</p>
+                <p>P: <span id="p4P">-</span> bar</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <p>Calcul en cours...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

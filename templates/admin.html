@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Administration — ThermoСool{% endblock %}
+
+{% block content %}
+<div class="page-wrap-wide">
+
+    <div style="margin-bottom:24px;">
+        <h1 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.4px;">🛡️ Panneau d'administration</h1>
+        <p style="color:#9ca3af;font-size:0.88rem;margin-top:4px;">Gestion des utilisateurs et des simulations</p>
+    </div>
+
+    <div class="admin-stats" id="adminStats">
+        <div class="admin-stat">
+            <div class="admin-stat-val" id="statUsers">—</div>
+            <div class="admin-stat-lbl">Utilisateurs total</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-val" id="statSims">—</div>
+            <div class="admin-stat-lbl">Simulations total</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-val" id="statAdmins">—</div>
+            <div class="admin-stat-lbl">Administrateurs</div>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <div class="history-head">
+            <h3>👥 Utilisateurs</h3>
+            <span style="font-size:0.82rem;color:#9ca3af;" id="userCount">Chargement...</span>
+        </div>
+        <div id="usersBody">
+            <div class="empty-state"><div class="spinner" style="margin:0 auto;display:block;border-top-color:#2563eb;"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadAdmin() {
+    try {
+        const [statsRes, usersRes] = await Promise.all([
+            fetch('/api/stats'),
+            fetch('/api/users')
+        ]);
+        const stats = await statsRes.json();
+        const users = await usersRes.json();
+
+        document.getElementById('statUsers').textContent = stats.total_users;
+        document.getElementById('statSims').textContent = stats.total_simulations;
+        document.getElementById('statAdmins').textContent = users.filter(u => u.is_admin).length;
+        document.getElementById('userCount').textContent = `${users.length} utilisateur(s)`;
+
+        const rows = users.map(u => `
+            <tr>
+                <td>
+                    <div style="font-weight:600;font-size:0.9rem;">${u.username}</div>
+                    <div style="font-size:0.78rem;color:#9ca3af;">${u.full_name || '—'}</div>
+                </td>
+                <td style="font-size:0.82rem;color:#6b7280;">${u.email}</td>
+                <td><span class="admin-badge ${u.is_admin ? 'badge-admin' : 'badge-user'}">${u.is_admin ? '⭐ Admin' : 'Utilisateur'}</span></td>
+                <td style="font-size:0.875rem;">${u.simulations_count}</td>
+                <td style="font-size:0.78rem;color:#9ca3af;">${u.created_at}</td>
+                <td>
+                    <button class="btn-toggle" onclick="toggleAdmin(${u.id}, this)">
+                        ${u.is_admin ? '↓ Retirer admin' : '↑ Promouvoir admin'}
+                    </button>
+                    <button class="btn-danger" onclick="deleteUser(${u.id}, this)">Supprimer</button>
+                </td>
+            </tr>`).join('');
+
+        document.getElementById('usersBody').innerHTML = `
+            <table class="htable">
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th><th>Email</th><th>Rôle</th>
+                        <th>Simulations</th><th>Inscrit le</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch (e) {
+        document.getElementById('usersBody').innerHTML = '<div class="empty-state"><p>Erreur de chargement.</p></div>';
+    }
+}
+
+async function toggleAdmin(userId, btn) {
+    btn.disabled = true;
+    const res = await fetch(`/api/users/${userId}/toggle-admin`, { method: 'POST' });
+    if ((await res.json()).status === 'success') loadAdmin();
+    else btn.disabled = false;
+}
+
+async function deleteUser(userId, btn) {
+    if (!confirm('Supprimer cet utilisateur et toutes ses données ?')) return;
+    btn.disabled = true;
+    const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+    if ((await res.json()).status === 'success') btn.closest('tr').remove();
+    else btn.disabled = false;
+}
+
+loadAdmin();
+</script>
+{% endblock %}

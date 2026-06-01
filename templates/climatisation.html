@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+{% block title %}Climatisation — ThermoСool{% endblock %}
+
+{% block content %}
+<div class="clim-wrap">
+
+    <!-- ══════════════════════════════════════════
+         HERO HEADER
+    ══════════════════════════════════════════ -->
+    <div class="clim-hero">
+        <div class="clim-hero-bg"></div>
+        <div class="hero-snowflakes" aria-hidden="true">
+            <svg class="hero-sf" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
+                <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07M12 2l-2 4 2 1 2-1zM12 22l-2-4 2-1 2 1zM2 12l4-2-1-2 1-2zM22 12l-4-2 1-2-1-2z"/>
+            </svg>
+            <svg class="hero-sf" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
+                <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07M12 2l-2 4 2 1 2-1zM12 22l-2-4 2-1 2 1zM2 12l4-2-1-2 1-2zM22 12l-4-2 1-2-1-2z"/>
+            </svg>
+            <svg class="hero-sf" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
+                <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/>
+            </svg>
+        </div>
+        <div class="clim-hero-inner">
+            <div class="clim-badge">❄️ Module Climatisation</div>
+            <h1 class="clim-title">Simulation & Dimensionnement</h1>
+            <p class="clim-sub">Estimez la puissance nécessaire, choisissez le type d'installation adapté et optimisez votre consommation énergétique.</p>
+            <div class="clim-hero-chips">
+                <div class="hero-chip"><span class="hero-chip-val">6</span> Types d'installation</div>
+                <div class="hero-chip">COP calculé en temps réel</div>
+                <div class="hero-chip">Norme EN 14511</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         INPUTS : Températures | Pièce | Usage
+    ══════════════════════════════════════════ -->
+    <div class="clim-inputs-row">
+
+        <div class="clim-card">
+            <div class="clim-card-title">🌡️ Températures</div>
+            <div class="clim-field">
+                <div class="clim-label">Température extérieure (°C)</div>
+                <input class="clim-input" type="number" id="tExt" value="38" min="20" max="55">
+            </div>
+            <div class="clim-field">
+                <div class="clim-label">Température intérieure souhaitée (°C)</div>
+                <input class="clim-input" type="number" id="tInt" value="24" min="16" max="30">
+            </div>
+        </div>
+
+        <div class="clim-card">
+            <div class="clim-card-title">🏠 Pièce</div>
+            <div class="clim-field">
+                <div class="clim-label">Surface (m²)</div>
+                <input class="clim-input" type="number" id="surface" value="30" min="5" max="300">
+            </div>
+            <div class="clim-field">
+                <div class="clim-label">Hauteur sous plafond (m)</div>
+                <input class="clim-input" type="number" id="hauteur" value="2.8" step="0.1" min="2" max="5">
+            </div>
+            <div class="clim-field">
+                <div class="clim-label">Isolation</div>
+                <select class="clim-select" id="isolation">
+                    <option value="0.8">Mauvaise (ancienne construction)</option>
+                    <option value="1.0" selected>Moyenne (standard)</option>
+                    <option value="1.3">Bonne (double vitrage)</option>
+                    <option value="1.6">Excellente (RT2020)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="clim-card">
+            <div class="clim-card-title">💡 Usage & Coût</div>
+            <div class="clim-field">
+                <div class="clim-label">Heures d'utilisation / jour</div>
+                <input class="clim-input" type="number" id="heures" value="10" min="1" max="24">
+            </div>
+            <div class="clim-field">
+                <div class="clim-label">Jours / mois</div>
+                <input class="clim-input" type="number" id="jours" value="30" min="1" max="31">
+            </div>
+            <div class="clim-field">
+                <div class="clim-label">Prix du kWh (MAD ou €)</div>
+                <input class="clim-input" type="number" id="prixKwh" value="1.45" step="0.01" min="0.1" max="5">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         TYPE D'INSTALLATION — SÉLECTEUR VISUEL
+    ══════════════════════════════════════════ -->
+    <div class="clim-section">
+        <div class="clim-section-hd">
+            <div class="clim-section-title">❄️ Type d'installation</div>
+            <div class="clim-section-sub">Le type influe sur le COP final et la puissance installée nécessaire</div>
+        </div>
+
+        <div class="type-cards-grid" id="typeCardsGrid">
+
+            <!-- Split Mural -->
+            <div class="type-card selected" data-type="split_mural" onclick="selectType(this,'split_mural')">
+                <div class="type-card-check">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <svg class="tc-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="6" width="56" height="34" rx="5" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5"/>
+                    <rect x="10" y="16" width="44" height="14" rx="4" fill="#4F46E5"/>
+                    <circle cx="47" cy="23" r="2.5" fill="#A5B4FC"/>
+                    <line x1="14" y1="21" x2="38" y2="21" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="14" y1="25" x2="32" y2="25" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="22" y1="32" x2="22" y2="44" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="32" y1="32" x2="32" y2="44" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M19 41 L22 45 L25 41" stroke="#818CF8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M29 41 L32 45 L35 41" stroke="#818CF8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="4" y1="58" x2="60" y2="58" stroke="#E0E7FF" stroke-width="2.5"/>
+                    <rect x="38" y="48" width="18" height="10" rx="3" fill="#6366F1"/>
+                    <circle cx="47" cy="53" r="3.5" stroke="#A5B4FC" stroke-width="1.5" fill="none"/>
+                </svg>
+                <div class="tc-name">Split Mural</div>
+                <div class="tc-cop">COP 3.5 – 5.0</div>
+            </div>
+
+            <!-- Multi-Split -->
+            <div class="type-card" data-type="multi_split" onclick="selectType(this,'multi_split')">
+                <div class="type-card-check">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <svg class="tc-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="4" width="22" height="10" rx="3" fill="#4F46E5"/>
+                    <rect x="38" y="4" width="22" height="10" rx="3" fill="#4F46E5"/>
+                    <line x1="15" y1="14" x2="15" y2="32" stroke="#818CF8" stroke-width="1.5" stroke-dasharray="3 2"/>
+                    <line x1="49" y1="14" x2="49" y2="32" stroke="#818CF8" stroke-width="1.5" stroke-dasharray="3 2"/>
+                    <line x1="15" y1="32" x2="32" y2="32" stroke="#818CF8" stroke-width="1.5" stroke-dasharray="3 2"/>
+                    <line x1="49" y1="32" x2="32" y2="32" stroke="#818CF8" stroke-width="1.5" stroke-dasharray="3 2"/>
+                    <line x1="32" y1="32" x2="32" y2="44" stroke="#818CF8" stroke-width="1.5" stroke-dasharray="3 2"/>
+                    <rect x="18" y="44" width="28" height="16" rx="4" fill="#4F46E5"/>
+                    <circle cx="32" cy="52" r="5.5" stroke="#A5B4FC" stroke-width="1.5" fill="none"/>
+                    <circle cx="32" cy="52" r="2" fill="#818CF8"/>
+                    <line x1="6" y1="9" x2="24" y2="9" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="40" y1="9" x2="58" y2="9" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                <div class="tc-name">Multi-Split</div>
+                <div class="tc-cop">COP 3.2 – 4.6</div>
+            </div>
+
+            <!-- Cassette -->
+            <div class="type-card" data-type="cassette" onclick="selectType(this,'cassette')">
+                <div class="type-card-check">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <svg class="tc-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="4" y1="10" x2="60" y2="10" stroke="#C7D2FE" stroke-width="3" stroke-linecap="round"/>
+                    <rect x="12" y="10" width="40" height="28" rx="3" fill="#4F46E5"/>
+                    <rect x="18" y="14" width="28" height="4" rx="1" fill="#6366F1"/>
+                    <circle cx="32" cy="27" r="7" fill="#6366F1" stroke="#A5B4FC" stroke-width="1.5"/>
+                    <circle cx="32" cy="27" r="2.5" fill="#C7D2FE"/>
+                    <!-- 4 directional arrows -->
+                    <line x1="32" y1="40" x2="32" y2="52" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M28 49 L32 54 L36 49" stroke="#818CF8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="10" y1="27" x2="2" y2="27" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M5 24 L1 27 L5 30" stroke="#818CF8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="54" y1="27" x2="62" y2="27" stroke="#818CF8" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M59 24 L63 27 L59 30" stroke="#818CF8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="tc-name">Cassette Plafond</div>
+                <div class="tc-cop">COP 3.3 – 4.8</div>
+            </div>
+
+            <!-- Gainable -->
+            <div class="type-card" data-type="gainable" onclick="selectType(this,'gainable')">
+                <div class="type-card-check">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <svg class="tc-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Air handler unit -->
+                    <rect x="4" y="18" width="18" height="22" rx="3" fill="#4F46E5"/>
+                    <circle cx="13" cy="29" r="6" stroke="#A5B4FC" stroke-width="1.5" fill="none"/>
+                    <path d="M13 23 L13 29 M19 29 L13 29" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Main duct -->
+                    <rect x="22" y="24" width="26" height="10" rx="2" fill="#6366F1"/>
+                    <!-- Branch up -->
+                    <rect x="38" y="12" width="8" height="12" rx="2" fill="#818CF8"/>
+                    <!-- Branch down -->
+                    <rect x="38" y="34" width="8" height="12" rx="2" fill="#818CF8"/>
+                    <!-- Grilles -->
+                    <rect x="46" y="26" width="14" height="6" rx="2" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1"/>
+                    <line x1="49" y1="27.5" x2="57" y2="27.5" stroke="#6366F1" stroke-width="1"/>
+                    <line x1="49" y1="29.5" x2="57" y2="29.5" stroke="#6366F1" stroke-width="1"/>
+                    <line x1="49" y1="31.5" x2="57" y2="31.5" stroke="#6366F1" stroke-width="1"/>
+                    <rect x="40" y="8" width="4" height="4" rx="1" fill="#EEF2FF" stroke="#C7D2FE"/>
+                    <rect x="40" y="46" width="4" height="4" rx="1" fill="#EEF2FF" stroke="#C7D2FE"/>
+                </svg>
+                <div class="tc-name">Gainable (conduit)</div>
+                <div class="tc-cop">COP 3.1 – 4.2</div>
+            </div>
+
+            <!-- Console -->
+            <div class="type-card" data-type="console" onclick="selectType(this,'console')">
+                <div class="type-card-check">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <svg class="tc-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Floor line -->
+                    <line x1="4" y1="58" x2="60" y2="58" stroke="#C7D2FE" stroke-width="2.5"/>
+                    <line x1="4" y1="10" x2="4" y2="58" stroke="#E0E7FF" stroke-width="2"/>
+                    <!-- Console body -->
+                    <rect x="16" y="14" width="22" height="44" rx="5" fill="#4F46E5"/>
+                    <!-- Top outlet -->
+                    <rect x="20" y="18" width="14" height="7" rx="2" fill="#6366F1"/>
+                    <line x1="23" y1="19" x2="23" y2="24" stroke="#A5B4FC" stroke-width="1"/>
+                    <line x1="27" y1="19" x2="27" y2="24" stroke="#A5B4FC" stroke-width="1"/>
+                    <line x1="31" y1="19" x2="31" y2="24" stroke="#A5B4FC" stroke-width="1"/>
+                    <!-- Control -->
+                    <circle cx="27" cy="32" r="4" fill="#6366F1" stroke="#A5B4FC" stroke-width="1.2"/>
+                    <circle cx="27" cy="32" r="1.5" fill="#C7D2FE"/>
+                    <!-- Front grille -->
+                    <line x1="18" y1="40" x2="36" y2="40" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                    <line x1="18" y1="43" x2="36" y2="43" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                    <line x1="18" y1="46" x2="36" y2="46" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                    <line x1="18" y1="49" x2="36" y2="49" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                    <line x1="18" y1="52" x2="36" y2="52" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                    <!-- Air up arrows -->
+                    <line x1="48" y1="50" x2="48" y2="22" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M44 26 L48 21 L52 26" stroke="#818CF8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="tc-name">Console / Colonne</div>
+                <div class="tc-cop">COP 3.4 – 5.0</div>
+            </div>
+
+            <!-- Armoire -->
+            <div class="type-card" data-type="armoire" onclick="selectType(this,'armoire')">
+                <div class="type-card-check">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <svg class="tc-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cabinet -->
+                    <rect x="14" y="4" width="36" height="56" rx="3" fill="#1E1B4B" stroke="#4F46E5" stroke-width="1.5"/>
+                    <!-- Top vents -->
+                    <rect x="18" y="6" width="28" height="6" rx="1" fill="#312E81"/>
+                    <line x1="21" y1="7" x2="21" y2="11" stroke="#818CF8" stroke-width="1.3"/>
+                    <line x1="25" y1="7" x2="25" y2="11" stroke="#818CF8" stroke-width="1.3"/>
+                    <line x1="29" y1="7" x2="29" y2="11" stroke="#818CF8" stroke-width="1.3"/>
+                    <line x1="33" y1="7" x2="33" y2="11" stroke="#818CF8" stroke-width="1.3"/>
+                    <line x1="37" y1="7" x2="37" y2="11" stroke="#818CF8" stroke-width="1.3"/>
+                    <line x1="41" y1="7" x2="41" y2="11" stroke="#818CF8" stroke-width="1.3"/>
+                    <!-- Rack units -->
+                    <rect x="18" y="14" width="28" height="5" rx="1" fill="#312E81"/>
+                    <rect x="18" y="21" width="28" height="5" rx="1" fill="#312E81"/>
+                    <rect x="18" y="28" width="28" height="5" rx="1" fill="#312E81"/>
+                    <rect x="18" y="35" width="28" height="5" rx="1" fill="#312E81"/>
+                    <!-- LEDs -->
+                    <circle cx="40" cy="16.5" r="2" fill="#34D399"/>
+                    <circle cx="40" cy="23.5" r="2" fill="#34D399"/>
+                    <circle cx="40" cy="30.5" r="2" fill="#FBBF24"/>
+                    <circle cx="40" cy="37.5" r="2" fill="#34D399"/>
+                    <!-- Handle -->
+                    <line x1="20" y1="50" x2="44" y2="50" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round"/>
+                    <!-- Bottom vents -->
+                    <rect x="18" y="54" width="28" height="4" rx="1" fill="#312E81"/>
+                    <!-- Cold in (left), hot out (right) -->
+                    <path d="M8 46 L8 20 M5 24 L8 19 L11 24" stroke="#60A5FA" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M56 20 L56 46 M53 42 L56 47 L59 42" stroke="#F87171" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="tc-name">Armoire Précision</div>
+                <div class="tc-cop">COP 2.8 – 4.0</div>
+            </div>
+
+        </div>
+
+        <!-- Info dynamique du type sélectionné -->
+        <div class="type-info-panel" id="typeInfoPanel">
+            <div class="tip-icon" id="tipIcon">🏠</div>
+            <div class="tip-body">
+                <div class="tip-title" id="tipTitle">Split Mural</div>
+                <div class="tip-desc" id="tipDesc">—</div>
+                <div class="tip-tags" id="tipTags"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PRIORITÉ D'OPTIMISATION + BOUTON
+    ══════════════════════════════════════════ -->
+    <div class="clim-card" style="margin-bottom:20px;">
+        <div class="clim-card-title">★ Priorité d'optimisation</div>
+        <div class="priority-row" id="priorityRow">
+            <button class="priority-btn selected" data-p="equilibre" onclick="selectPriority(this,'equilibre')">
+                ⚖️ Équilibre<small>Tous critères égaux</small>
+            </button>
+            <button class="priority-btn" data-p="energie" onclick="selectPriority(this,'energie')">
+                ⚡ Énergie<small>Meilleur COP</small>
+            </button>
+            <button class="priority-btn" data-p="cout" onclick="selectPriority(this,'cout')">
+                💰 Coût<small>Facture minimale</small>
+            </button>
+            <button class="priority-btn" data-p="ecologie" onclick="selectPriority(this,'ecologie')">
+                🌿 Écologie<small>GWP le plus bas</small>
+            </button>
+            <button class="priority-btn" data-p="rendement" onclick="selectPriority(this,'rendement')">
+                📈 Rendement<small>Pressions optimales</small>
+            </button>
+        </div>
+        <button class="btn-clim-run" onclick="runClimatisation()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Lancer la simulation
+        </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         RÉSULTATS
+    ══════════════════════════════════════════ -->
+    <div class="clim-results" id="climResults">
+        <div class="clim-card">
+            <div class="clim-results-hd">
+                <span class="clim-results-hd-icon">📊</span>
+                Résultats de simulation
+            </div>
+
+            <!-- 5 KPIs -->
+            <div class="clim-kpi-row">
+                <div class="clim-kpi" style="--kpi-color:#2563eb">
+                    <span class="clim-kpi-icon">⚡</span>
+                    <div class="clim-kpi-val" id="crPower">—</div>
+                    <div class="clim-kpi-lbl">Puissance requise (W)</div>
+                </div>
+                <div class="clim-kpi" style="--kpi-color:#0891b2">
+                    <span class="clim-kpi-icon">♻️</span>
+                    <div class="clim-kpi-val" id="crCOP">—</div>
+                    <div class="clim-kpi-lbl">COP (Coeff. de performance)</div>
+                </div>
+                <div class="clim-kpi" style="--kpi-color:#7c3aed">
+                    <span class="clim-kpi-icon">🔋</span>
+                    <div class="clim-kpi-val" id="crKwh">—</div>
+                    <div class="clim-kpi-lbl">Consommation mensuelle</div>
+                </div>
+                <div class="clim-kpi" style="--kpi-color:#059669">
+                    <span class="clim-kpi-icon">💳</span>
+                    <div class="clim-kpi-val" id="crCost">—</div>
+                    <div class="clim-kpi-lbl">Coût mensuel estimé</div>
+                </div>
+                <div class="clim-kpi clim-kpi--type" style="--kpi-color:#4f46e5">
+                    <span class="clim-kpi-icon" id="crTypeIcon">❄️</span>
+                    <div class="clim-kpi-val" id="crType">—</div>
+                    <div class="clim-kpi-lbl">Type d'installation</div>
+                </div>
+            </div>
+
+            <!-- Jauge COP -->
+            <div class="cop-gauge-wrap">
+                <div class="cop-gauge-hd">
+                    <span class="cop-gauge-title">Efficacité COP (0 → 6)</span>
+                    <span class="cop-gauge-val" id="copGaugeLabel">—</span>
+                </div>
+                <div class="cop-gauge-track">
+                    <div class="cop-gauge-fill" id="copGaugeFill" style="width:0%"></div>
+                </div>
+                <div class="cop-gauge-labels">
+                    <span>0 — Inefficace</span>
+                    <span>3 — Moyen</span>
+                    <span>6 — Excellent</span>
+                </div>
+            </div>
+
+            <!-- Recommandation -->
+            <div class="clim-rec">
+                <div class="clim-rec-title">💡 Recommandation</div>
+                <div class="clim-rec-text" id="crRec">—</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedPriority = 'equilibre';
+let selectedTypeKey  = 'split_mural';
+
+const TYPE_DATA = {
+    split_mural: {
+        label: "Split Mural", icon: "🏠",
+        cop_factor: 1.0, power_margin: 1.10,
+        desc: "Installation murale standard. Idéal pour pièces jusqu'à ~50 m². Solution la plus répandue en résidentiel, simple à installer, entretien facile.",
+        fluides: ["R32", "R410A"], norm: "EN 14511"
+    },
+    multi_split: {
+        label: "Multi-Split", icon: "🏢",
+        cop_factor: 0.92, power_margin: 1.15,
+        desc: "Un groupe extérieur, plusieurs unités intérieures. COP légèrement réduit par les pertes de charge dans les longs circuits frigorifiques.",
+        fluides: ["R32", "R410A"], norm: "EN 14511"
+    },
+    cassette: {
+        label: "Cassette Plafond", icon: "⬜",
+        cop_factor: 0.95, power_margin: 1.12,
+        desc: "Diffusion 4 sens encastrée au plafond. Convient aux espaces commerciaux (50–150 m²). Distribution homogène sur toute la surface.",
+        fluides: ["R32", "R410A", "R290"], norm: "EN 14511"
+    },
+    gainable: {
+        label: "Gainable (conduit)", icon: "📦",
+        cop_factor: 0.88, power_margin: 1.20,
+        desc: "Distribution par réseau de gaines aérauliques. Confort uniforme et esthétique discrète. Perte COP notable par friction dans les conduits.",
+        fluides: ["R32", "R410A"], norm: "EN 14511"
+    },
+    console: {
+        label: "Console / Colonne", icon: "🗄️",
+        cop_factor: 0.97, power_margin: 1.10,
+        desc: "Unité posée au sol ou en colonne. Simple à installer, sans travaux de maçonnerie. Idéale pour rénovation ou espaces sans faux-plafond.",
+        fluides: ["R32", "R410A", "R290"], norm: "EN 14511"
+    },
+    armoire: {
+        label: "Armoire de Précision", icon: "🖥️",
+        cop_factor: 0.85, power_margin: 1.25,
+        desc: "Refroidissement de précision pour salles serveurs et laboratoires. Contrôle hygrométrique intégré. COP plus faible dû aux contraintes de précision.",
+        fluides: ["R134a", "R32"], norm: "EN 14511 / ASHRAE"
+    }
+};
+
+function selectType(el, key) {
+    document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTypeKey = key;
+    updateTypePanel(key);
+}
+
+function updateTypePanel(key) {
+    const d = TYPE_DATA[key];
+    document.getElementById('tipIcon').textContent  = d.icon;
+    document.getElementById('tipTitle').textContent = d.label;
+    document.getElementById('tipDesc').textContent  = d.desc;
+    const tags = document.getElementById('tipTags');
+    tags.innerHTML = d.fluides.map(f => `<span class="tip-tag">${f}</span>`).join('')
+                   + `<span class="tip-tag norm">${d.norm}</span>`;
+}
+
+function selectPriority(el, p) {
+    document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPriority = p;
+}
+
+function runClimatisation() {
+    const tExt    = parseFloat(document.getElementById('tExt').value);
+    const tInt    = parseFloat(document.getElementById('tInt').value);
+    const surface = parseFloat(document.getElementById('surface').value);
+    const hauteur = parseFloat(document.getElementById('hauteur').value);
+    const iso     = parseFloat(document.getElementById('isolation').value);
+    const heures  = parseFloat(document.getElementById('heures').value);
+    const jours   = parseFloat(document.getElementById('jours').value);
+    const prix    = parseFloat(document.getElementById('prixKwh').value);
+
+    const td = TYPE_DATA[selectedTypeKey];
+
+    const deltaT = tExt - tInt;
+    const volume = surface * hauteur;
+    const Qgain  = (volume * 25 * deltaT / iso);
+    const Qneed  = Math.max(500, Math.min(30000, Qgain));
+
+    const Tc  = tInt + 273.15;
+    const Th  = tExt + 273.15;
+    const COP = Math.min(6, Math.max(1.8, (Tc / (Th - Tc)) * 0.5));
+
+    const Qfinal    = Qneed * td.power_margin;
+    const COPfinal  = COP * td.cop_factor;
+    const Pelec     = Qfinal / COPfinal;
+    const kwhMonth  = (Pelec / 1000) * heures * jours;
+    const costMonth = kwhMonth * prix;
+
+    // KPIs
+    document.getElementById('crPower').textContent = Math.round(Qfinal).toLocaleString('fr-FR') + ' W';
+    document.getElementById('crCOP').textContent   = COPfinal.toFixed(2);
+    document.getElementById('crKwh').textContent   = kwhMonth.toFixed(1) + ' kWh';
+    document.getElementById('crCost').textContent  = costMonth.toFixed(2);
+    document.getElementById('crType').textContent  = td.label;
+    document.getElementById('crTypeIcon').textContent = td.icon;
+
+    // COP gauge
+    const copPct = Math.min(100, (COPfinal / 6) * 100);
+    const fill = document.getElementById('copGaugeFill');
+    const color = COPfinal >= 4 ? '#10b981' : COPfinal >= 2.5 ? '#f59e0b' : '#ef4444';
+    fill.style.width   = copPct + '%';
+    fill.style.background = `linear-gradient(90deg, ${color}88, ${color})`;
+    document.getElementById('copGaugeLabel').textContent = COPfinal.toFixed(2);
+    document.getElementById('copGaugeLabel').style.color = color;
+
+    // Recommendation
+    const recs = {
+        equilibre: getRec(Qfinal, COPfinal, 'R32', 'R410A', td),
+        energie:   getRec(Qfinal, COPfinal, 'R290', 'R32', td) + ' Privilégiez un fluide à COP élevé comme le R290 (propane).',
+        cout:      getRec(Qfinal, COPfinal, 'R32', 'R410A', td) + ' Installez une minuterie pour limiter les heures de fonctionnement.',
+        ecologie:  getRec(Qfinal, COPfinal, 'R290', 'R744 (CO₂)', td) + ' Utilisez des fluides à faible GWP : R290 (GWP=3) ou R744 (GWP=1).',
+        rendement: getRec(Qfinal, COPfinal, 'R32', 'R134a', td) + ' Optimisez les températures de saturation pour maximiser le COP.'
+    };
+    document.getElementById('crRec').textContent = recs[selectedPriority];
+
+    const area = document.getElementById('climResults');
+    area.classList.add('visible');
+    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Save to DB
+    fetch('/api/climatisation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            type_clim: selectedTypeKey, t_int: tInt, t_ext: tExt,
+            power: Math.round(Qfinal), cop: parseFloat(COPfinal.toFixed(2)),
+            pelec: parseFloat(Pelec.toFixed(2)),
+            kwh_month: parseFloat(kwhMonth.toFixed(1)),
+            cost_month: parseFloat(costMonth.toFixed(2))
+        })
+    }).catch(() => {});
+}
+
+function getRec(Q, cop, fluid1, fluid2, td) {
+    const size = Q < 2500 ? '9 000 BTU' : Q < 4000 ? '12 000 BTU' : Q < 6000 ? '18 000 BTU' : Q < 8500 ? '24 000 BTU' : '36 000+ BTU';
+    return `${td.icon} ${td.label} — Puissance dimensionnée : ${size} (${Math.round(Q).toLocaleString('fr-FR')} W). Fluides recommandés : ${fluid1} ou ${fluid2}. COP estimé : ${cop.toFixed(1)}.`;
+}
+
+// Init panel on load
+updateTypePanel('split_mural');
+</script>
+{% endblock %}

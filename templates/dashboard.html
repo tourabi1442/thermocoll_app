@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ThermoСool{% endblock %}
+
+{% block content %}
+<div class="page-wrap-wide">
+
+    <div class="dash-hero">
+        <div class="dash-hero-text">
+            <h1>Bonjour, {{ session.get('username', '') }} 👋</h1>
+            <p>Bienvenue sur votre espace de simulation thermodynamique.</p>
+        </div>
+        <div class="dash-hero-icon">❄️</div>
+    </div>
+
+    <div class="kpi-row" id="statsRow">
+        <div class="kpi-row-card">
+            <div class="kpi-row-icon">🔬</div>
+            <div>
+                <div class="kpi-row-val" id="totalSims">—</div>
+                <div class="kpi-row-lbl">Simulations effectuées</div>
+            </div>
+        </div>
+        <div class="kpi-row-card">
+            <div class="kpi-row-icon">📈</div>
+            <div>
+                <div class="kpi-row-val" id="bestCop">—</div>
+                <div class="kpi-row-lbl">Meilleur COP obtenu</div>
+            </div>
+        </div>
+        <div class="kpi-row-card">
+            <div class="kpi-row-icon">🌡️</div>
+            <div>
+                <div class="kpi-row-val" id="lastFluid">—</div>
+                <div class="kpi-row-lbl">Dernier fluide utilisé</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <div class="history-head">
+            <h3>📋 Historique des simulations</h3>
+            <a href="/simulator" style="font-size:0.82rem;color:#2563eb;text-decoration:none;font-weight:600;">
+                + Nouvelle simulation
+            </a>
+        </div>
+        <div id="historyBody">
+            <div class="empty-state">
+                <div class="spinner" style="margin:0 auto 12px;display:block;border-top-color:#2563eb;"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadDashboard() {
+    try {
+        const res = await fetch('/api/simulations');
+        const sims = await res.json();
+        const body = document.getElementById('historyBody');
+
+        document.getElementById('totalSims').textContent = sims.length;
+
+        if (sims.length === 0) {
+            body.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔬</div>
+                    <p>Aucune simulation pour l'instant. <a href="/simulator">Lancer votre première simulation</a></p>
+                </div>`;
+            document.getElementById('bestCop').textContent = '—';
+            document.getElementById('lastFluid').textContent = '—';
+            return;
+        }
+
+        const bestCop = Math.max(...sims.map(s => s.cop));
+        document.getElementById('bestCop').textContent = bestCop.toFixed(2);
+        document.getElementById('lastFluid').textContent = sims[0].fluid;
+
+        const rows = sims.map(s => {
+            const copClass = s.cop >= 4 ? 'cop-hi' : s.cop >= 2.5 ? 'cop-mid' : 'cop-lo';
+            return `
+                <tr>
+                    <td>${s.created_at}</td>
+                    <td><span class="fluid-tag">${s.fluid}</span></td>
+                    <td><span class="cop-pill ${copClass}">${s.cop}</span></td>
+                    <td>${s.efficiency}%</td>
+                    <td>${s.temp_evap}°C / ${s.temp_cond}°C</td>
+                    <td>${s.power} W</td>
+                    <td>${s.model_type}</td>
+                    <td>
+                        <button class="btn-sm" onclick="deleteSim(${s.id}, this)">🗑 Suppr.</button>
+                    </td>
+                </tr>`;
+        }).join('');
+
+        body.innerHTML = `
+            <table class="htable">
+                <thead>
+                    <tr>
+                        <th>Date</th><th>Fluide</th><th>COP</th><th>Efficacité</th>
+                        <th>T Evap / Cond</th><th>Puissance</th><th>Modèle</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch (e) {
+        document.getElementById('historyBody').innerHTML = '<div class="empty-state"><p>Erreur de chargement.</p></div>';
+    }
+}
+
+async function deleteSim(id, btn) {
+    if (!confirm('Supprimer cette simulation ?')) return;
+    btn.disabled = true;
+    const res = await fetch(`/api/simulation/${id}`, { method: 'DELETE' });
+    if ((await res.json()).status === 'success') {
+        btn.closest('tr').remove();
+        loadDashboard();
+    }
+}
+
+loadDashboard();
+</script>
+{% endblock %}

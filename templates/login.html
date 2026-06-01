@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — ThermoСool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-box">
+        <div class="auth-logo">
+            <div class="logo-emoji">❄️</div>
+            <h1>ThermoСool</h1>
+            <p>Simulation thermodynamique avancée</p>
+        </div>
+
+        <div class="alert alert-err" id="alertErr"></div>
+
+        <div class="form-group">
+            <label class="form-label">Nom d'utilisateur</label>
+            <input type="text" class="form-input" id="username" placeholder="votre_username" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Mot de passe</label>
+            <input type="password" class="form-input" id="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <button class="btn-auth" id="loginBtn" onclick="doLogin()">
+            Se connecter
+        </button>
+
+        <div class="auth-footer">
+            Pas encore de compte ? <a href="/register">Créer un compte</a>
+        </div>
+    </div>
+</div>
+
+<script>
+async function doLogin() {
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('alertErr');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+        err.textContent = 'Veuillez remplir tous les champs.';
+        err.classList.add('show');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Connexion...';
+    err.classList.remove('show');
+
+    try {
+        const res = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            window.location.href = '/dashboard';
+        } else {
+            err.textContent = data.message || 'Identifiants invalides.';
+            err.classList.add('show');
+            btn.disabled = false;
+            btn.textContent = 'Se connecter';
+        }
+    } catch {
+        err.textContent = 'Erreur de connexion. Réessayez.';
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Se connecter';
+    }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
