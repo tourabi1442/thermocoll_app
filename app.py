@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from physics.cycle_solver import CycleSolver
+from physics.fluids import all_fluids
 import json
 from datetime import datetime
 from functools import wraps
@@ -155,6 +156,33 @@ def admin():
 
 # ==================== API ====================
 
+def rounded_points(point):
+    return {
+        k: round(v, 2) if isinstance(v, float) else v
+        for k, v in point.items()
+    }
+
+
+def serialize_cycle_result(res):
+    return {
+        'COP': round(res['COP'], 2),
+        'COP_carnot': round(res['COP_carnot'], 2),
+        'practical_factor': round(res['practical_factor'] * 100, 1),
+        'W_comp': round(res['W_comp'], 2),
+        'Q_evap': round(res['Q_evap'], 2),
+        'Q_cond': round(res['Q_cond'], 2),
+        'pressure_ratio': round(res['pressure_ratio'], 2),
+        'temperature_lift': round(res['temperature_lift'], 1),
+        'compressor_efficiency': round(res['compressor_efficiency'] * 100, 1),
+        'monthly_kwh_index': round(res['monthly_kwh_index'], 1),
+        'fluid_meta': res['fluid_meta'],
+        'recommendation': res['recommendation'],
+        'point1': rounded_points(res['point1']),
+        'point2': rounded_points(res['point2']),
+        'point3': rounded_points(res['point3']),
+        'point4': rounded_points(res['point4']),
+    }
+
 @app.route('/api/calculate', methods=['POST'])
 @login_required
 def calculate():
@@ -185,18 +213,48 @@ def calculate():
         db.session.add(sim)
         db.session.commit()
 
-        return jsonify({
+        payload = serialize_cycle_result(res)
+        payload.update({
             'status': 'success',
             'simulation_id': sim.id,
-            'COP': round(res['COP'], 2),
-            'W_comp': round(res['W_comp'], 2),
-            'Q_evap': round(res['Q_evap'], 2),
             'efficiency': round(min(res['COP'] / 6.0 * 100, 100), 1),
-            'point1': {k: round(v, 2) for k, v in res['point1'].items() if isinstance(v, float)},
-            'point2': {k: round(v, 2) for k, v in res['point2'].items() if isinstance(v, float)},
-            'point3': {k: round(v, 2) for k, v in res['point3'].items() if isinstance(v, float)},
-            'point4': {k: round(v, 2) for k, v in res['point4'].items() if isinstance(v, float)},
         })
+        return jsonify(payload)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+
+
+@app.route('/api/compare', methods=['POST'])
+@login_required
+def compare_refrigerants():
+    try:
+        data = request.json or {}
+        rows = []
+        for fluid in all_fluids().keys():
+            solver = CycleSolver(
+                fluid_name=fluid,
+                T_evap=data.get('temp_evap', 5),
+                T_cond=data.get('temp_cond', 45),
+                Q_evap=data.get('power', 7800)
+            )
+            res = solver.solve()
+            meta = res['fluid_meta']
+            score = (res['COP'] * 18) + (meta['eco_score'] * 0.35) - (res['pressure_ratio'] * 2.5)
+            rows.append({
+                'fluid': fluid,
+                'name': meta['name'],
+                'family': meta['family'],
+                'cop': round(res['COP'], 2),
+                'w_comp': round(res['W_comp'], 0),
+                'pressure_ratio': round(res['pressure_ratio'], 2),
+                'gwp': meta['gwp'],
+                'safety': meta['safety'],
+                'eco_score': meta['eco_score'],
+                'score': round(score, 1),
+                'recommendation': res['recommendation']
+            })
+        rows.sort(key=lambda item: item['score'], reverse=True)
+        return jsonify({'status': 'success', 'rows': rows})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
 

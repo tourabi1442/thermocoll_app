@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ThermoСool{% endblock %}</title>
+    <title>{% block title %}ThermoCool{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -12,8 +12,8 @@
 <body>
 <nav class="navbar">
     <a href="/dashboard" class="nav-brand">
-        <span class="brand-icon">❄️</span>
-        <span>ThermoСool</span>
+        <span class="brand-icon">TC</span>
+        <span>ThermoCool</span>
     </a>
 
     <div class="nav-links">
@@ -48,11 +48,11 @@
     <div class="nav-user">
         <div class="user-avatar">{{ session.get('username', 'U')[0].upper() }}</div>
         <span class="nav-username">{{ session.get('username', '') }}</span>
-        <a href="/logout" class="btn-logout">Déconnexion</a>
+        <a href="/logout" class="btn-logout">Deconnexion</a>
     </div>
 </nav>
 
-<div>{% block content %}{% endblock %}</div>
+<main>{% block content %}{% endblock %}</main>
 
 {% block extra_js %}{% endblock %}
 </body>

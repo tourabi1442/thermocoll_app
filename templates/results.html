@@ -1,45 +1,67 @@
 {% extends "base.html" %}
-{% block title %}Analyse — ThermoСool{% endblock %}
+{% block title %}Analyse - ThermoCool{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
-
-    <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
+<div class="page-wrap-wide report-page">
+    <div class="report-hero">
         <div>
-            <h1 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.4px;">📊 Analyse des résultats</h1>
-            <p style="color:#9ca3af;font-size:0.88rem;margin-top:4px;">Dernière simulation & historique</p>
+            <div class="eyebrow">Rapport technique</div>
+            <h1>Analyse des performances</h1>
+            <p>Historique, indicateurs energetiques et synthese imprimable pour soutenir la presentation PFE.</p>
         </div>
-        <a href="/simulator" style="padding:10px 20px;background:#2563eb;color:white;border-radius:9px;text-decoration:none;font-size:0.875rem;font-weight:600;">
-            + Nouvelle simulation
-        </a>
-    </div>
-
-    <!-- Last simulation summary -->
-    <div class="card" id="lastSimCard" style="display:none;">
-        <div class="section-header"><span style="font-weight:700;">Dernière simulation</span></div>
-        <div class="kpi-grid" id="lastKpis"></div>
-        <div style="margin-top:18px;" id="lastPoints"></div>
-    </div>
-
-    <!-- All simulations chart -->
-    <div class="card">
-        <div class="section-header" style="margin-bottom:20px;">
-            <span style="font-weight:700;">Évolution du COP</span>
-        </div>
-        <div id="chartContainer" style="position:relative;height:220px;">
-            <canvas id="copChart"></canvas>
+        <div class="report-actions">
+            <a href="/simulator" class="btn-secondary">Nouvelle simulation</a>
+            <button class="btn-run small" onclick="window.print()">Imprimer le rapport</button>
         </div>
     </div>
 
-    <!-- History table -->
-    <div class="card" style="overflow:hidden;padding:0;">
-        <div style="padding:18px 22px;border-bottom:1px solid #f3f4f6;font-weight:700;font-size:0.9rem;">
-            Toutes les simulations
+    <section class="card" id="lastSimCard" style="display:none;">
+        <div class="section-head tight">
+            <div>
+                <div class="eyebrow">Derniere simulation</div>
+                <h2>Synthese du cycle</h2>
+            </div>
+            <span id="lastMeta" class="muted"></span>
+        </div>
+        <div class="kpi-grid rich" id="lastKpis"></div>
+        <div class="recommendation-box" id="lastRecommendation"></div>
+    </section>
+
+    <section class="analysis-grid">
+        <div class="card">
+            <div class="section-head tight">
+                <h2>Evolution du COP</h2>
+            </div>
+            <div id="chartContainer" style="position:relative;height:260px;">
+                <canvas id="copChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card decision-card">
+            <div class="eyebrow">Lecture rapide</div>
+            <h2>Ce qu'il faut commenter</h2>
+            <p>
+                Un bon dossier PFE ne donne pas seulement un resultat: il explique
+                le compromis entre rendement, puissance absorbee, securite du fluide
+                et impact environnemental.
+            </p>
+            <ul>
+                <li>COP plus eleve: consommation electrique plus faible.</li>
+                <li>GWP plus faible: meilleur argument environnemental.</li>
+                <li>Rapport de pression eleve: compresseur plus sollicite.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="history-card">
+        <div class="history-head">
+            <h3>Toutes les simulations</h3>
+            <span class="muted" id="historyCount">Chargement...</span>
         </div>
         <div id="allSims">
-            <div class="empty-state"><div style="font-size:1.5rem;">📂</div><p>Chargement...</p></div>
+            <div class="empty-state"><p>Chargement...</p></div>
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}
 
@@ -49,30 +71,30 @@
 let chart = null;
 
 async function loadResults() {
-    // Last simulation from session
     const last = sessionStorage.getItem('lastSimulation');
     if (last) {
         const d = JSON.parse(last);
         document.getElementById('lastSimCard').style.display = 'block';
+        document.getElementById('lastMeta').textContent = `${d.fluid_meta.name} | ${d.fluid_meta.family}`;
         document.getElementById('lastKpis').innerHTML = `
             <div class="kpi-card kpi-cop"><div class="kpi-label">COP</div><div class="kpi-value">${d.COP}</div></div>
-            <div class="kpi-card kpi-eff"><div class="kpi-label">Efficacité</div><div class="kpi-value">${d.efficiency}%</div></div>
-            <div class="kpi-card kpi-power"><div class="kpi-label">Q_evap</div><div class="kpi-value">${Math.round(d.Q_evap)}</div><div class="kpi-unit">W</div></div>
-            <div class="kpi-card kpi-wcomp"><div class="kpi-label">W_comp</div><div class="kpi-value">${Math.round(d.W_comp)}</div><div class="kpi-unit">W</div></div>
+            <div class="kpi-card kpi-eff"><div class="kpi-label">COP Carnot</div><div class="kpi-value">${d.COP_carnot}</div></div>
+            <div class="kpi-card kpi-power"><div class="kpi-label">W comp</div><div class="kpi-value">${Math.round(d.W_comp)}</div><div class="kpi-unit">W</div></div>
+            <div class="kpi-card kpi-wcomp"><div class="kpi-label">GWP</div><div class="kpi-value">${d.fluid_meta.gwp}</div></div>
         `;
+        document.getElementById('lastRecommendation').textContent = d.recommendation;
     }
 
-    // All simulations
     try {
         const res = await fetch('/api/simulations');
         const sims = await res.json();
+        document.getElementById('historyCount').textContent = `${sims.length} simulation(s)`;
 
         if (sims.length === 0) {
-            document.getElementById('allSims').innerHTML = '<div class="empty-state"><div>🔬</div><p>Aucune simulation. <a href="/simulator">Lancez-en une !</a></p></div>';
+            document.getElementById('allSims').innerHTML = '<div class="empty-state"><p>Aucune simulation. <a href="/simulator">Lancez-en une</a>.</p></div>';
             return;
         }
 
-        // Chart
         const ctx = document.getElementById('copChart').getContext('2d');
         if (chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -82,23 +104,25 @@ async function loadResults() {
                 datasets: [{
                     label: 'COP',
                     data: sims.slice().reverse().map(s => s.cop),
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37,99,235,0.08)',
-                    tension: 0.4, fill: true,
-                    pointBackgroundColor: '#2563eb', pointRadius: 4
+                    borderColor: '#0f766e',
+                    backgroundColor: 'rgba(15,118,110,0.12)',
+                    tension: 0.35,
+                    fill: true,
+                    pointBackgroundColor: '#0f766e',
+                    pointRadius: 4
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: false, grid: { color: '#f3f4f6' } },
+                    y: { beginAtZero: false, grid: { color: '#e7ecef' } },
                     x: { grid: { display: false } }
                 }
             }
         });
 
-        // Table
         const rows = sims.map(s => {
             const cls = s.cop >= 4 ? 'cop-hi' : s.cop >= 2.5 ? 'cop-mid' : 'cop-lo';
             return `
@@ -107,19 +131,23 @@ async function loadResults() {
                     <td><span class="fluid-tag">${s.fluid}</span></td>
                     <td><span class="cop-pill ${cls}">${s.cop}</span></td>
                     <td>${s.efficiency}%</td>
-                    <td>${s.temp_evap}°C / ${s.temp_cond}°C</td>
-                    <td>${(s.power/1000).toFixed(1)} kW</td>
-                    <td style="color:#9ca3af;font-size:0.8rem;">${s.model_type}</td>
+                    <td>${s.temp_evap} C / ${s.temp_cond} C</td>
+                    <td>${(s.power / 1000).toFixed(1)} kW</td>
+                    <td>${Math.round(s.w_comp)} W</td>
+                    <td class="muted">${s.model_type}</td>
                 </tr>`;
         }).join('');
+
         document.getElementById('allSims').innerHTML = `
-            <table class="htable">
-                <thead><tr>
-                    <th>Date</th><th>Fluide</th><th>COP</th><th>Efficacité</th>
-                    <th>T Evap / Cond</th><th>Puissance</th><th>Modèle</th>
-                </tr></thead>
-                <tbody>${rows}</tbody>
-            </table>`;
+            <div class="table-scroll">
+                <table class="htable">
+                    <thead><tr>
+                        <th>Date</th><th>Fluide</th><th>COP</th><th>Efficacite</th>
+                        <th>Temperatures</th><th>Charge</th><th>W comp</th><th>Modele</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
     } catch (e) {
         document.getElementById('allSims').innerHTML = '<div class="empty-state"><p>Erreur de chargement.</p></div>';
     }
